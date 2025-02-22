@@ -1,5 +1,4 @@
 import db from '@/db'
-import { clerkClient } from '@clerk/nextjs/server'
 import { Ride, RideStatus } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 import amqp from 'amqplib'
@@ -37,9 +36,6 @@ export async function POST (req: NextRequest) {
     if (!pickup || !dropoff || !userId) {
       return NextResponse.json({ error: 'Data not provided' }, { status: 400 })
     }
-
-    const client = await clerkClient()
-    const user = userId ? await client.users.getUser(userId) : undefined
 
     // Create ride in the database
     const ride = await db.ride.create({

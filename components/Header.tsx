@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
+import { SignInButton, UserButton } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
+import Link from 'next/link'
 
 export default async function Header () {
   const { userId } = await auth()

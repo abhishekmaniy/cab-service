@@ -2,35 +2,35 @@
 
 import { useRideStore } from '@/app/store/rideStore'
 import { Button } from '@/components/ui/button'
-import { Clock, MapPin, User } from 'lucide-react'
 import { RideStatus as RS } from '@prisma/client'
+import { Clock, MapPin, User } from 'lucide-react'
 
 export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
-  const { currentRide, setCurrentRide } = useRideStore()
+  const { currentRide } = useRideStore()
 
   console.log(currentRide)
 
-  const completeRide = async () => {
-    if (!currentRide) return
+  // const completeRide = async () => {
+  //   if (!currentRide) return
 
-    try {
-      const response = await fetch('/api/complete-ride', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId: currentRide.id })
-      })
+  //   try {
+  //     const response = await fetch('/api/complete-ride', {
+  //       method: 'PATCH',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ rideId: currentRide.id })
+  //     })
 
-      if (response.ok) {
-        setCurrentRide(null)
-        alert('Ride completed Successfully')
-      } else {
-        alert('Error completing ride')
-      }
-    } catch (error) {
-      console.error(error)
-      alert('Something went wrong')
-    }
-  }
+  //     if (response.ok) {
+  //       setCurrentRide(null)
+  //       alert('Ride completed Successfully')
+  //     } else {
+  //       alert('Error completing ride')
+  //     }
+  //   } catch (error) {
+  //     console.error(error)
+  //     alert('Something went wrong')
+  //   }
+  // }
 
   return (
     <div className='bg-white p-6 rounded-lg shadow-lg border border-gray-200'>

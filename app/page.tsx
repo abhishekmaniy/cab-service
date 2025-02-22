@@ -1,11 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Car, UserCircle } from 'lucide-react'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
+import { Car, UserCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function Home () {
   const { userId } = useAuth()

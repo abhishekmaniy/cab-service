@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { MapPin, Navigation } from 'lucide-react'
 import { useAuth } from '@clerk/nextjs'
+import { MapPin, Navigation } from 'lucide-react'
+import { useState } from 'react'
 
 export default function RideRequest () {
   const [pickup, setPickup] = useState('')
   const [dropoff, setDropoff] = useState('')
-  const [loading, setLoading] = useState(false)
   const { userId } = useAuth()
 
   const handleRequest = async () => {
@@ -25,7 +24,6 @@ export default function RideRequest () {
         body: JSON.stringify({ pickup, dropoff , userId })
       })
 
-      const data = await response.json()
 
       if (response.ok) {
         alert("Ride Creted")

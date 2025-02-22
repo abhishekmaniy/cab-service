@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { clerkClient, getAuth } from '@clerk/nextjs/server'
+import { clerkClient } from '@clerk/nextjs/server'
 import { Role } from '@prisma/client'
 import db from '@/db'
 

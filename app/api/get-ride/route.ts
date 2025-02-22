@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import amqp from 'amqplib'
+import { NextResponse } from 'next/server'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL!
 const QUEUE_NAME = process.env.QUEUE_NAME!
@@ -37,7 +37,7 @@ async function getRideFromQueue() {
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH() {
   try {
     const ride = await getRideFromQueue()
 
