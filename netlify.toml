@@ -1,2 +1,0 @@
-[build]
-  command = "npm i && npx prisma generate && npm run build"

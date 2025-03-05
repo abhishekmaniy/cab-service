@@ -33,14 +33,14 @@ export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
   // }
 
   return (
-    <div className='bg-white p-6 rounded-lg shadow-lg border border-gray-200'>
-      <h2 className='text-2xl font-bold mb-6 text-gray-800'>Ride Status</h2>
+    <div className='bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-200'>
+      <h2 className='text-2xl font-bold mb-6 text-white'>Ride Status</h2>
       {currentRide?.status === RS.REQUESTED ? (
         <span>no Rides Accepted</span>
       ) : (
         <>
           <div className='space-y-4 mb-6'>
-            <div className='flex items-center text-gray-700'>
+            <div className='flex items-center text-gray-400'>
               <User className='mr-2 text-blue-500' />
               <p>
                 <strong>{role === 'rider' ? 'Driver' : 'Rider'}:</strong>{' '}
@@ -49,26 +49,26 @@ export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
                   : currentRide?.passengerId}
               </p>
             </div>
-            <div className='flex items-center text-gray-700'>
+            <div className='flex items-center text-gray-400'>
               <MapPin className='mr-2 text-green-500' />
               <p>
                 <strong>Pickup:</strong> {currentRide?.pickup}
               </p>
             </div>
-            <div className='flex items-center text-gray-700'>
+            <div className='flex items-center text-gray-400'>
               <MapPin className='mr-2 text-red-500' />
               <p>
                 <strong>Dropoff:</strong> {currentRide?.destination}
               </p>
             </div>
-            <div className='flex items-center text-gray-700'>
+            <div className='flex items-center text-gray-400'>
               <Clock className='mr-2 text-yellow-500' />
               <p>
                 <strong>Status:</strong> {currentRide?.status}
               </p>
             </div>
           </div>
-          <Button className='w-full bg-uber-gradient hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105'>
+          <Button className='w-full bg-gray-800 hover:bg-gray-700'>
             {role === 'rider' ? 'Cancel Ride' : 'Complete Ride'}
           </Button>
         </>

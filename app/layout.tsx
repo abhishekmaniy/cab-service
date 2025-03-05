@@ -1,8 +1,8 @@
 import Header from '@/components/Header'
-import './globals.css'
-import { Inter } from 'next/font/google'
-import type React from 'react' // Added import for React
 import { ClerkProvider } from '@clerk/nextjs'
+import { Inter } from 'next/font/google'
+import type React from 'react'; // Added import for React
+import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,7 +21,7 @@ export default function RootLayout ({
       <html lang='en'>
         <body className={inter.className}>
           <Header />
-          <main className='container mx-auto px-4 py-8'>{children}</main>
+          <main className='bg-black'>{children}</main>
         </body>
       </html>
     </ClerkProvider>
