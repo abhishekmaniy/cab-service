@@ -2,19 +2,11 @@
 
 import { Button } from '@/components/ui/button'
 import useWebSocket from '@/hooks/useSocket'
-import { getLatLng } from '@/lib/getLatLng'
-import { autoComplete } from '@/lib/google'
 import { useAuth } from '@clerk/nextjs'
-import { PlaceAutocompleteResult } from '@googlemaps/google-maps-services-js'
-import { useCallback, useEffect, useState } from 'react'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from './ui/command'
+import { Autocomplete } from '@react-google-maps/api'
+import { useState } from 'react'
+import { geocodeByAddress, getLatLng } from 'react-places-autocomplete'
+import { Input } from './ui/input'
 
 export default function RideRequest () {
   const [pickup, setPickup] = useState('')
@@ -22,77 +14,37 @@ export default function RideRequest () {
   const { userId } = useAuth()
   const socket = useWebSocket()
 
-
-  const [pickupPrediction, setPickupPrediction] = useState<
-    PlaceAutocompleteResult[]
-  >([])
-  const [dropoffPrediction, setDropoffPrediction] = useState<
-    PlaceAutocompleteResult[]
-  >([])
-
-  const [selectedPickup, setSelectedPickup] = useState<{
-    description: string
-    place_id: string
-  } | null>(null)
-  const [selectedDropoff, setSelectedDropoff] = useState<{
-    description: string
-    place_id: string
-  } | null>(null)
-
-  const fetchPredictions = useCallback(
-    async (
-      input: string,
-      setter: (predictions: PlaceAutocompleteResult[]) => void
-    ) => {
-      if (input.length > 2) {
-        try {
-          const predictions = await autoComplete(input)
-          setter(predictions ?? [])
-        } catch (error) {
-          console.error('Error fetching predictions:', error)
-        }
-      } else {
-        setter([])
-      }
-    },
-    []
-  )
-
-  useEffect(() => {
-    fetchPredictions(pickup, setPickupPrediction)
-  }, [pickup, fetchPredictions])
-
-  useEffect(() => {
-    fetchPredictions(destination, setDropoffPrediction)
-  }, [destination, fetchPredictions])
-
   const handleRequest = async () => {
-    if (!selectedPickup || !selectedDropoff) {
+    if (!pickup || !destination) {
       alert('Please enter both pickup & dropoff locations')
       return
     }
     try {
-      const pickupLocation = await getLatLng(selectedPickup.place_id)
-      const destinationLocation = await getLatLng(selectedDropoff.place_id)
+      const pickupResults = await geocodeByAddress(pickup)
+      const pickupLocation = await getLatLng(pickupResults[0])
+
+      const destinationResults = await geocodeByAddress(destination)
+      const destinationLocation = await getLatLng(destinationResults[0])
 
       if (!pickupLocation || !destinationLocation) {
         return alert('Invalid pickup & destination location')
       }
-      console.log('PickupLocation', pickupLocation?.lat, pickupLocation?.lng)
+
+      console.log('PickupLocation:', pickupLocation.lat, pickupLocation.lng)
       console.log(
-        'destinationLocation',
-        destinationLocation?.lat,
-        destinationLocation?.lng
+        'DestinationLocation:',
+        destinationLocation.lat,
+        destinationLocation.lng
       )
 
       const response = await fetch('/api/create-ride', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pickupLat: pickupLocation?.lat ?? null,
-          pickupLng: pickupLocation?.lng ?? null,
-          destinationLat: destinationLocation?.lat ?? null,
-          destinationLng: destinationLocation?.lng ?? null,
+          pickupLat: pickupLocation.lat,
+          pickupLng: pickupLocation.lng,
+          destinationLat: destinationLocation.lat,
+          destinationLng: destinationLocation.lng,
           riderId: userId ?? null
         })
       })
@@ -102,8 +54,8 @@ export default function RideRequest () {
       if (socket) {
         socket.emit('event:request_ride', {
           riderId: userId,
-          pickup: pickupLocation,
-          destination: destinationLocation
+          pickup: pickup,
+          destination: destination
         })
         alert('Ride Created')
       } else {
@@ -121,70 +73,24 @@ export default function RideRequest () {
       <div className='space-y-6'>
         {/* Pickup Location */}
         <div className='relative'>
-          <Command className='bg-gray-700 text-white'>
-            <CommandInput
-              placeholder='Enter pickup location'
+          <Autocomplete>
+            <Input
               value={pickup}
-              onValueChange={setPickup}
+              onChange={e => setPickup(e.target.value)}
+              placeholder='Enter pickup location'
             />
-            <CommandList className='bg-black text-white'>
-              <CommandGroup heading='Suggestions'>
-                {pickupPrediction.length ? (
-                  pickupPrediction.map(item => (
-                    <CommandItem
-                      key={item.place_id}
-                      onSelect={() => {
-                        setSelectedPickup({
-                          description: item.description,
-                          place_id: item.place_id
-                        })
-                        setPickup(item.description)
-                      }}
-                      className='text-white'
-                    >
-                      {item.description}
-                    </CommandItem>
-                  ))
-                ) : (
-                  <CommandEmpty>No results found.</CommandEmpty>
-                )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+          </Autocomplete>
         </div>
 
         {/* Dropoff Location */}
         <div className='relative'>
-          <Command className='bg-gray-700 text-white'>
-            <CommandInput
-              placeholder='Enter dropoff location'
+          <Autocomplete>
+            <Input
               value={destination}
-              onValueChange={setDestination}
+              onChange={e => setDestination(e.target.value)}
+              placeholder='Enter dropoff location'
             />
-            <CommandList className='bg-black text-white'>
-              <CommandGroup heading='Suggestions'>
-                {dropoffPrediction.length ? (
-                  dropoffPrediction.map(item => (
-                    <CommandItem
-                      key={item.place_id}
-                      onSelect={() => {
-                        setSelectedDropoff({
-                          description: item.description,
-                          place_id: item.place_id
-                        })
-                        setDestination(item.description)
-                      }}
-                      className='text-white'
-                    >
-                      {item.description}
-                    </CommandItem>
-                  ))
-                ) : (
-                  <CommandEmpty>No results found.</CommandEmpty>
-                )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+          </Autocomplete>
         </div>
 
         {/* Submit Button */}

@@ -1,15 +1,15 @@
 'use client'
 
 import { useRideStore } from '@/app/store/rideStore'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import useWebSocket from '@/hooks/useSocket'
 import { useAuth } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 
+
 export default function DriverDashboard () {
   const [isAvailable, setIsAvailable] = useState(false)
-  const { currentRide, setCurrentRide } = useRideStore()
+  const { availableRide, setAvailableRide } = useRideStore()
   const socket = useWebSocket()
   const { userId } = useAuth()
 
@@ -18,7 +18,7 @@ export default function DriverDashboard () {
     if (socket) {
       socket.on('event:new_ride', ride => {
         console.log('New Ride Request Received:', ride)
-        setCurrentRide(ride)
+        setAvailableRide(ride)
       })
 
       return () => {
@@ -55,27 +55,17 @@ export default function DriverDashboard () {
         />
       </div>
 
-      {currentRide && (
+      {availableRide && isAvailable && (
         <div className='space-y-4 p-4 bg-blue-50 rounded-lg'>
           <h3 className='text-xl font-semibold text-blue-800'>
             New Ride Request
           </h3>
-          <p className='text-gray-700'>
-            <strong>Pickup:</strong> {currentRide.pickup}
-          </p>
-          <p className='text-gray-700'>
-            <strong>Dropoff:</strong> {currentRide.destination}
-          </p>
-
-          <div className='flex space-x-4'>
-            <Button className='w-full bg-blue-500 hover:bg-blue-600'>
-              Accept Ride
-            </Button>
-
-            <Button className='w-full bg-red-500 hover:bg-red-600'>
-              Reject Ride
-            </Button>
-          </div>
+          {availableRide.map(ride => (
+            <>
+              <span>Pickup: {ride.pickup}</span>
+              <span>Destination: {ride.destination}</span>
+            </>
+          ))}
         </div>
       )}
     </div>

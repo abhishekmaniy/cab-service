@@ -8,7 +8,7 @@ const useWebSocket = () => {
 
   useEffect(() => {
     // Ensure socket is initialized once
-    const newSocket = io("http://localhost:8000", {
+    const newSocket = io("http://localhost:8001", {
       transports: ["websocket"], // Ensure WebSocket transport
     });
 

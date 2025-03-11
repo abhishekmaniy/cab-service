@@ -1,9 +1,7 @@
 'use client'
 
 import { BackgroundBeams } from '@/components/ui/background-beams'
-import { Button } from '@/components/ui/button'
 import { useAuth } from '@clerk/nextjs'
-import { Car, UserCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
