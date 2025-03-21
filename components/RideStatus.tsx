@@ -8,7 +8,7 @@ import { createRide } from '@/services/rideService'
 import { getCoordinates } from '@/lib/geolocation'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Ride } from '@prisma/client'
+import { Ride } from '@/app/store/rideStore'
 
 export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
   const { price, pickupLocation, dropoffLocation } = useLocationStore()
@@ -66,7 +66,7 @@ export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
           pickupCoords,
           dropoffCoords,
           price,
-          rideId: ride.id
+          rideId: ride.riderId
         })
         alert('Ride Created')
       } else {
