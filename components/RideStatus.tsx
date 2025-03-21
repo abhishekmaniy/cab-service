@@ -1,77 +1,125 @@
 'use client'
 
-import { useRideStore } from '@/app/store/rideStore'
+import { useLocationStore } from '@/app/store/locationStore'
 import { Button } from '@/components/ui/button'
-import { RideStatus as RS } from '@prisma/client'
-import { Clock, MapPin, User } from 'lucide-react'
+import useWebSocket from '@/hooks/useSocket'
+import { useAuth } from '@clerk/nextjs'
+import { createRide } from '@/services/rideService'
+import { getCoordinates } from '@/lib/geolocation'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Ride } from '@prisma/client'
 
 export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
-  const { currentRide } = useRideStore()
+  const { price, pickupLocation, dropoffLocation } = useLocationStore()
+  const { userId } = useAuth()
+  const socket = useWebSocket(userId ?? '', 'rider')
+  const [noDrivers, setNoDrivers] = useState(false)
+  const router = useRouter()
 
-  console.log(currentRide)
+  useEffect(() => {
+    socket?.on('event:no_drivers_available', () => {
+      console.log('No Drivers are available')
+      setNoDrivers(true)
+    })
+  }, [])
 
-  // const completeRide = async () => {
-  //   if (!currentRide) return
+  useEffect(() => {
+    socket?.on('event:ride_assigned', ride => {
+      alert('RIde Assigned to you')
+      console.log(ride)
+    })
+  }, [])
 
-  //   try {
-  //     const response = await fetch('/api/complete-ride', {
-  //       method: 'PATCH',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ rideId: currentRide.id })
-  //     })
+  useEffect(() => {
+    socket?.on('event:ride_confirmed', driverId => {
+      alert('Your ride is assign to drivers')
+      console.log(driverId)
+    })
+  })
 
-  //     if (response.ok) {
-  //       setCurrentRide(null)
-  //       alert('Ride completed Successfully')
-  //     } else {
-  //       alert('Error completing ride')
-  //     }
-  //   } catch (error) {
-  //     console.error(error)
-  //     alert('Something went wrong')
-  //   }
-  // }
+  const handleConfirmRide = async () => {
+    if (!pickupLocation || !dropoffLocation) {
+      return alert('Pickup and dropoff locations are required')
+    }
+
+    const pickupCoords = await getCoordinates(pickupLocation)
+    const dropoffCoords = await getCoordinates(dropoffLocation)
+
+    if (!pickupCoords || !dropoffCoords) {
+      return alert('Invalid pickup & destination location')
+    }
+
+    try {
+      const ride: Ride = await createRide({
+        pickupCoords,
+        dropoffCoords,
+        riderId: userId ?? null,
+        price: parseFloat(price)
+      })
+
+      if (socket) {
+        socket.emit('event:request_ride', {
+          riderId: userId,
+          pickup: pickupLocation,
+          destination: dropoffLocation,
+          pickupCoords,
+          dropoffCoords,
+          price,
+          rideId: ride.id
+        })
+        alert('Ride Created')
+      } else {
+        alert('Socket connection not established')
+      }
+
+      router.push(`/driver-callback`)
+    } catch (error) {
+      alert('Failed to create ride')
+      console.error(error)
+    }
+  }
 
   return (
     <div className='bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-200'>
-      <h2 className='text-2xl font-bold mb-6 text-white'>Ride Status</h2>
-      {currentRide?.status === RS.REQUESTED ? (
-        <span>no Rides Accepted</span>
-      ) : (
+      {role === 'rider' ? (
         <>
-          <div className='space-y-4 mb-6'>
-            <div className='flex items-center text-gray-400'>
-              <User className='mr-2 text-blue-500' />
-              <p>
-                <strong>{role === 'rider' ? 'Driver' : 'Rider'}:</strong>{' '}
-                {role === 'rider'
-                  ? currentRide?.captainId
-                  : currentRide?.passengerId}
-              </p>
-            </div>
-            <div className='flex items-center text-gray-400'>
-              <MapPin className='mr-2 text-green-500' />
-              <p>
-                <strong>Pickup:</strong> {currentRide?.pickup}
-              </p>
-            </div>
-            <div className='flex items-center text-gray-400'>
-              <MapPin className='mr-2 text-red-500' />
-              <p>
-                <strong>Dropoff:</strong> {currentRide?.destination}
-              </p>
-            </div>
-            <div className='flex items-center text-gray-400'>
-              <Clock className='mr-2 text-yellow-500' />
-              <p>
-                <strong>Status:</strong> {currentRide?.status}
-              </p>
-            </div>
-          </div>
-          <Button className='w-full bg-gray-800 hover:bg-gray-700'>
-            {role === 'rider' ? 'Cancel Ride' : 'Complete Ride'}
-          </Button>
+          <h2 className='text-2xl font-bold mb-6 text-white'>Ride Status</h2>
+          {!pickupLocation || !dropoffLocation ? (
+            <span className='text-white'>
+              Enter valid Pickup & Destnation Point
+            </span>
+          ) : (
+            <>
+              <div className='space-y-4 mb-6'>
+                <p className='text-gray-400'>
+                  <strong>Pickup:</strong> {pickupLocation}
+                </p>
+                <p className='text-gray-400'>
+                  <strong>Dropoff:</strong> {dropoffLocation}
+                </p>
+                <p className='text-gray-400'>
+                  <strong>Price:</strong> {price}
+                </p>
+              </div>
+              <div>
+                {noDrivers && (
+                  <span> No Drivers are available for your ride</span>
+                )}
+              </div>
+              <Button
+                onClick={handleConfirmRide}
+                className='w-full bg-gray-800 hover:bg-gray-700'
+              >
+                Confirm Ride
+              </Button>
+            </>
+          )}
         </>
+      ) : (
+        <div>
+          <h1 className='text-white text-2xl'></h1>
+        </div>
       )}
     </div>
   )

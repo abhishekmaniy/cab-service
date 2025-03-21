@@ -1,42 +1,100 @@
 'use client'
 
-import { useRideStore } from '@/app/store/rideStore'
+import { Ride, useRideStore } from '@/app/store/rideStore'
 import { Switch } from '@/components/ui/switch'
 import useWebSocket from '@/hooks/useSocket'
 import { useAuth } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
-
+import { Button } from './ui/button'
 
 export default function DriverDashboard () {
   const [isAvailable, setIsAvailable] = useState(false)
   const { availableRide, setAvailableRide } = useRideStore()
-  const socket = useWebSocket()
   const { userId } = useAuth()
+  const socket = useWebSocket(userId ?? '', 'driver')
 
   useEffect(() => {
-    // Listen for new ride requests
-    if (socket) {
-      socket.on('event:new_ride', ride => {
-        console.log('New Ride Request Received:', ride)
-        setAvailableRide(ride)
-      })
+    if (!socket) return
 
-      return () => {
-        socket.off('event:new_ride')
-      }
+    // Listen for new ride requests
+    socket.on('event:ride_assigned', (ride: Ride) => {
+      console.log('🚗 New Ride Request Received:', ride)
+      setAvailableRide(ride) // Store ride details
+    })
+
+    return () => {
+      socket.off('event:new_ride')
     }
   }, [socket])
 
-  const toggleAvailability = async () => {
+  const toggleAvailability = () => {
     setIsAvailable(!isAvailable)
 
     if (!isAvailable && socket) {
-      socket.emit('event:available_driver', {
-        driverId: `${userId}`,
-        location: 'Downtown'
+      // Get driver's real-time location
+      navigator.geolocation.getCurrentPosition(position => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+
+        socket.emit('event:available_driver', {
+          driverId: userId,
+          location
+        })
+
+        console.log('📍 Driver available at:', location)
       })
     }
   }
+
+  const handleAcceptRide = (ride: Ride) => {
+    if (!socket) return
+
+    console.log('✅ Ride Accepted:', ride)
+
+    socket.emit(`event:ride_accepted`, {
+      driverId: userId,
+      riderId: ride.riderId,
+      pickup: ride.pickup,
+      destination: ride.destination
+    })
+  }
+
+  const handleRejectRide = (ride: Ride) => {
+    if (!socket) return
+
+    console.log('✅ Ride Reject:', ride)
+
+    socket.emit(`event:ride_rejected`, {
+      driverId: userId,
+      riderId: ride.riderId,
+      pickup: ride.pickup,
+      destination: ride.destination
+    })
+  }
+
+  useEffect(() => {
+    if (!socket || !isAvailable) return
+
+    const interval = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(position => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+
+        socket.emit('event:driver_location_update', {
+          driverId: userId,
+          location
+        })
+
+        console.log('📡 Location updated:', location)
+      })
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [socket, isAvailable])
 
   return (
     <div className='bg-white p-6 rounded-lg shadow-lg border border-gray-200'>
@@ -64,6 +122,12 @@ export default function DriverDashboard () {
             <>
               <span>Pickup: {ride.pickup}</span>
               <span>Destination: {ride.destination}</span>
+              <Button onClick={() => handleAcceptRide(ride)}>
+                Accept Ride
+              </Button>
+              <Button onClick={() => handleRejectRide(ride)}>
+                Reject Ride
+              </Button>
             </>
           ))}
         </div>

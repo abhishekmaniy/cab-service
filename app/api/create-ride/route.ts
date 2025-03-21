@@ -1,9 +1,17 @@
-import { prisma, RideStatus } from '@repo/db'
+import { RideStatus } from '@prisma/client'
+import prismaClient from 'db/client'
 import { NextResponse } from 'next/server'
 
 export const POST = async (req: Request) => {
   try {
-    const { riderId, pickupLat, pickupLng, destinationLat, destinationLng } = await req.json()
+    const {
+      riderId,
+      pickupLat,
+      pickupLng,
+      destinationLat,
+      destinationLng,
+      price
+    } = await req.json()
     console.log(riderId, pickupLat, pickupLng, destinationLat, destinationLng)
 
     if (
@@ -16,23 +24,24 @@ export const POST = async (req: Request) => {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
 
-    const ride = await prisma.ride.create({
+    const ride = await prismaClient.ride.create({
       data: {
         passengerId: riderId,
         pickupLat,
         pickupLng,
         destinationLat,
         destinationLng,
-        status: RideStatus.REQUESTED
+        status: RideStatus.REQUESTED,
+        price
       }
     })
 
-    return NextResponse.json(ride , { status: 201 })
+    return NextResponse.json(ride, { status: 201 })
   } catch (error) {
     console.error('Error In Create Ride', error)
     return NextResponse.json(
-      { error : 'Internal server error' },
-      { status : 500 }
+      { error: 'Internal server error' },
+      { status: 500 }
     )
   }
 }

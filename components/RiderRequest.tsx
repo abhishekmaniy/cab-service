@@ -1,66 +1,58 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import useWebSocket from '@/hooks/useSocket'
-import { useAuth } from '@clerk/nextjs'
+import { calculatePrice } from '@/lib/getPrice'
 import { Autocomplete } from '@react-google-maps/api'
-import { useState } from 'react'
-import { geocodeByAddress, getLatLng } from 'react-places-autocomplete'
+import { useRef, useState } from 'react'
+import { useLocationStore } from '../app/store/locationStore'
 import { Input } from './ui/input'
+type DirectionsResult = google.maps.DirectionsResult
 
 export default function RideRequest () {
-  const [pickup, setPickup] = useState('')
-  const [destination, setDestination] = useState('')
-  const { userId } = useAuth()
-  const socket = useWebSocket()
+  // Removed async from here
+  const originRef = useRef<HTMLInputElement>(null)
+  const destinationRef = useRef<HTMLInputElement>(null)
+  const {
+    setPrice,
+    setDropoffLocation,
+    setPickupLocation,
+    setDistance,
+    setDuration,
+    pickupLocation,
+    dropoffLocation
+  } = useLocationStore()
+
+  const [map, setMap] = useState<google.maps.Map | null>(null)
+  const [directionsResponse, setDirectionsResponse] =
+    useState<DirectionsResult | null>(null)
 
   const handleRequest = async () => {
-    if (!pickup || !destination) {
+    if (!pickupLocation || !dropoffLocation) {
       alert('Please enter both pickup & dropoff locations')
       return
     }
     try {
-      const pickupResults = await geocodeByAddress(pickup)
-      const pickupLocation = await getLatLng(pickupResults[0])
+      const directionsService = new google.maps.DirectionsService()
 
-      const destinationResults = await geocodeByAddress(destination)
-      const destinationLocation = await getLatLng(destinationResults[0])
-
-      if (!pickupLocation || !destinationLocation) {
-        return alert('Invalid pickup & destination location')
-      }
-
-      console.log('PickupLocation:', pickupLocation.lat, pickupLocation.lng)
-      console.log(
-        'DestinationLocation:',
-        destinationLocation.lat,
-        destinationLocation.lng
-      )
-
-      const response = await fetch('/api/create-ride', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pickupLat: pickupLocation.lat,
-          pickupLng: pickupLocation.lng,
-          destinationLat: destinationLocation.lat,
-          destinationLng: destinationLocation.lng,
-          riderId: userId ?? null
-        })
+      const results = await directionsService.route({
+        origin: originRef.current?.value!,
+        destination: destinationRef.current?.value!,
+        travelMode: google.maps.TravelMode.DRIVING
       })
 
-      if (!response.ok) throw new Error('Error while creating ride')
+      setDirectionsResponse(results)
+      const distanceText = results.routes[0].legs[0].distance?.text || ''
+      const durationText = results.routes[0].legs[0].duration?.text || ''
 
-      if (socket) {
-        socket.emit('event:request_ride', {
-          riderId: userId,
-          pickup: pickup,
-          destination: destination
-        })
-        alert('Ride Created')
-      } else {
-        alert('Socket connection not established')
-      }
+      setDistance(distanceText)
+      setDuration(durationText)
+
+      const ridePrice = calculatePrice(distanceText, durationText)
+
+      setPrice(ridePrice)
+
+      console.log('Distance:', distanceText)
+      console.log('Duration:', durationText)
     } catch (error) {
       console.error('Error Creating Ride:', error)
       alert('Something went wrong!')
@@ -75,9 +67,10 @@ export default function RideRequest () {
         <div className='relative'>
           <Autocomplete>
             <Input
-              value={pickup}
-              onChange={e => setPickup(e.target.value)}
+              value={pickupLocation!}
+              onChange={e => setPickupLocation(e.target.value)}
               placeholder='Enter pickup location'
+              ref={originRef}
             />
           </Autocomplete>
         </div>
@@ -86,9 +79,10 @@ export default function RideRequest () {
         <div className='relative'>
           <Autocomplete>
             <Input
-              value={destination}
-              onChange={e => setDestination(e.target.value)}
+              value={dropoffLocation!}
+              onChange={e => setDropoffLocation(e.target.value)}
               placeholder='Enter dropoff location'
+              ref={destinationRef}
             />
           </Autocomplete>
         </div>

@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Button } from './ui/button'
 
 export default function Header () {
   const { isSignedIn } = useAuth()
@@ -27,7 +28,16 @@ export default function Header () {
         <Link href='/' className='text-2xl font-bold'>
           Maniyar Cab Service
         </Link>
-      <div>{isSignedIn ? <UserButton /> : <SignInButton />}</div>
+        <div>
+          {isSignedIn ? (
+            <div className="flex items-center" >
+              <Button onClick={() => router.push('/rides')}>Your Rides</Button>
+              <UserButton />
+            </div>
+          ) : (
+            <SignInButton />
+          )}
+        </div>
       </div>
     </header>
   )
