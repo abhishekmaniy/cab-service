@@ -1,7 +1,6 @@
 'use client'
 
 import { SignInButton, useAuth, UserButton } from '@clerk/nextjs'
-import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'

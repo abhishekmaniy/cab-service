@@ -22,21 +22,21 @@ export default function RideStatus ({ role }: { role: 'rider' | 'driver' }) {
       console.log('No Drivers are available')
       setNoDrivers(true)
     })
-  }, [])
+  }, [socket])
 
   useEffect(() => {
     socket?.on('event:ride_assigned', ride => {
       alert('RIde Assigned to you')
       console.log(ride)
     })
-  }, [])
+  }, [socket])
 
   useEffect(() => {
     socket?.on('event:ride_confirmed', driverId => {
       alert('Your ride is assign to drivers')
       console.log(driverId)
     })
-  })
+  }, [socket])
 
   const handleConfirmRide = async () => {
     if (!pickupLocation || !dropoffLocation) {

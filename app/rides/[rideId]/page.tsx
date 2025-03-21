@@ -1,8 +1,6 @@
 'use client'
 
-import DriverDashboard from '@/components/DriverDashboard'
 import Map from '@/components/Map'
-import RideStatus from '@/components/RideStatus'
 import { useLoadScript } from '@react-google-maps/api'
 import { useParams } from 'next/navigation'
 

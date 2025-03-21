@@ -3,10 +3,9 @@
 import useWebSocket from '@/hooks/useSocket'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 const DriverCallback = () => {
-  const [isDriverAssigned, setIsDriverAssigned] = useState(false)
   const { userId } = useAuth()
   const router = useRouter()
 
@@ -15,12 +14,17 @@ const DriverCallback = () => {
   useEffect(() => {
     if (!socket) return
 
-    socket.on('event:ride_confirmed', async ({ driverId, rideId }) => {
+    socket.on('event:ride_confirmed', async ({ rideId }) => {
       router.push(`/rides/${rideId}`)
     })
-  }, [])
+  }, [router , socket])
 
-  return <>{!isDriverAssigned && <div>waiting for driver</div>}</>
+  return (
+    <>
+      {' '}
+      <div>waiting for driver</div>
+    </>
+  )
 }
 
 export default DriverCallback

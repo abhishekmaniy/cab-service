@@ -25,7 +25,7 @@ export default function DriverDashboard () {
     return () => {
       socket.off('event:new_ride')
     }
-  }, [socket])
+  }, [socket , setAvailableRide])
 
   const toggleAvailability = () => {
     setIsAvailable(!isAvailable)
@@ -94,7 +94,7 @@ export default function DriverDashboard () {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [socket, isAvailable])
+  }, [socket, isAvailable , setAvailableRide , userId])
 
   return (
     <div className='bg-white p-6 rounded-lg shadow-lg border border-gray-200'>

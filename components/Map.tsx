@@ -1,11 +1,11 @@
 'use client'
 
-import { GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api'
+import { useLocationStore } from '@/app/store/locationStore'
+import { DirectionsRenderer, GoogleMap, Marker } from '@react-google-maps/api'
 import { LocateIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Button } from './ui/button'
-import { useLocationStore } from '@/app/store/locationStore'
 import { geocodeByAddress, getLatLng } from 'react-places-autocomplete'
+import { Button } from './ui/button'
 
 export default function Map() {
   const {
@@ -17,7 +17,6 @@ export default function Map() {
     setDuration
   } = useLocationStore()
 
-  const [map, setMap] = useState<google.maps.Map | null>(null)
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null)
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -109,7 +108,6 @@ export default function Map() {
         zoom={15}
         mapContainerStyle={{ width: '100%', height: '100%' }}
         options={mapOptions}
-        onLoad={mapInstance => setMap(mapInstance)}
       >
         {location && <Marker position={{ lat: location.latitude, lng: location.longitude }} />}
         {pickupCoords && <Marker position={pickupCoords} />}
